@@ -1,3 +1,3 @@
-#! /bin/bas
+#! /bin/bash
 cd /home/huazai
 ll
