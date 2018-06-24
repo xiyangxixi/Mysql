@@ -1,0 +1,21 @@
+# 安装mysql8.0
+
+1 安装以下几个包
+
+mysql-community-libs-8.0.11-1.el7.x86_64
+mysql-community-common-8.0.11-1.el7.x86_64
+mysql-community-server-8.0.11-1.el7.x86_64
+mysql-community-client-8.0.11-1.el7.x86_64
+
+2 临时密码在 cat /var/log/mysqld.log
+
+3 启动mysql systemctl start mysqld
+
+4 登陆并更改密码
+
+create user 'test'@'%' identified by '123456';
+grant all on *.* to 'test'@'%' with grant option;
+
+5 设置可以使用navicate连接
+
+alter user 'test'@'%' identified WITH mysql_native_password  by '123456';
