@@ -19,3 +19,12 @@ grant all on *.* to 'test'@'%' with grant option;
 5 设置可以使用navicate连接
 
 alter user 'test'@'%' identified WITH mysql_native_password  by '123456';
+
+6 修改root密码 首先需要登录mysql
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'abcd1234';
+
+7 navicate登录
+
+update mysql.user set host = "%" where user = 'root';
+grant all on *.* to 'root'@'%' with grant option;
