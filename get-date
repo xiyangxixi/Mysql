@@ -1,0 +1,66 @@
+# 获取mysql的一些日期
+
+select last_day(curdate()); #获取本月最后一天
+
+mysql> select last_day(curdate());
++---------------------+
+| last_day(curdate()) |
++---------------------+
+| 2018-06-30          |
++---------------------+
+1 row in set (0.00 sec)
+
+
+select date_add(curdate(), interval - day(curdate()) + 1 day); #获取本月第一天
+
+mysql> select date_add(curdate(), interval - day(curdate()) + 1 day);
++--------------------------------------------------------+
+| date_add(curdate(), interval - day(curdate()) + 1 day) |
++--------------------------------------------------------+
+| 2018-06-01                                             |
++--------------------------------------------------------+
+1 row in set (0.00 sec)
+
+
+select date_add(curdate() - day(curdate()) + 1, interval 1 month); #获取下个月第一天
+
+mysql> select date_add(curdate() - day(curdate()) + 1, interval 1 month); 
++------------------------------------------------------------+
+| date_add(curdate() - day(curdate()) + 1, interval 1 month) |
++------------------------------------------------------------+
+| 2018-07-01                                                 |
++------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+select day(last_day(curdate())); #获取本月天数
+
+mysql> select day(last_day(curdate()));
++--------------------------+
+| day(last_day(curdate())) |
++--------------------------+
+|                       30 |
++--------------------------+
+1 row in set (0.00 sec)
+
+select date_sub(curdate(), interval 1 month); #获取一个月前那一天
+
+mysql> select date_sub(curdate(), interval 1 month);
++---------------------------------------+
+| date_sub(curdate(), interval 1 month) |
++---------------------------------------+
+| 2018-05-26                            |
++---------------------------------------+
+1 row in set (0.00 sec)
+
+
+select datediff(curdate(), date_sub(curdate(), interval 1 month)); #获取当前时间与一个月之间的天数
+
+mysql> select datediff(curdate(), date_sub(curdate(), interval 1 month));
++------------------------------------------------------------+
+| datediff(curdate(), date_sub(curdate(), interval 1 month)) |
++------------------------------------------------------------+
+|                                                         31 |
++------------------------------------------------------------+
+1 row in set (0.06 sec)
+
+
