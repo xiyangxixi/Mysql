@@ -63,4 +63,45 @@ mysql> select datediff(curdate(), date_sub(curdate(), interval 1 month));
 +------------------------------------------------------------+
 1 row in set (0.06 sec)
 
+# 获取几天后的日期
+mysql> select DATE_SUB(curdate(), interval -1 DAY) ;
++--------------------------------------+
+| DATE_SUB(curdate(), interval -1 DAY) |
++--------------------------------------+
+| 2018-06-27                           |
++--------------------------------------+
+1 row in set (0.08 sec)
+
+mysql> select DATE_SUB(curdate(), interval -15 DAY) ;
++---------------------------------------+
+| DATE_SUB(curdate(), interval -15 DAY) |
++---------------------------------------+
+| 2018-07-11                            |
++---------------------------------------+
+1 row in set (0.00 sec)
+
+# 获取几天前的日期
+mysql> select DATE_SUB(curdate(), interval 15 DAY) ;
++--------------------------------------+
+| DATE_SUB(curdate(), interval 15 DAY) |
++--------------------------------------+
+| 2018-06-11                           |
++--------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> select DATE_SUB(curdate(), interval 1 DAY) ;
++-------------------------------------+
+| DATE_SUB(curdate(), interval 1 DAY) |
++-------------------------------------+
+| 2018-06-25                          |
++-------------------------------------+
+1 row in set (0.00 sec)
+
+# 前一个小时
+select DATE_SUB(now(), interval 1 hour);
+
+# 后一个小时
+select DATE_SUB(now(), interval -1 hour);
+
+
 
