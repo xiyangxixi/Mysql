@@ -1,5 +1,6 @@
 # 使用今天的日期创建明天的表 如今天是2018-06-26，则表名为2018-06-27
-
+delimiter //
+create procedure test()
 BEGIN
 	 declare the_date date default CURDATE();
 		declare cd date;
@@ -21,4 +22,4 @@ BEGIN
  
     EXECUTE stmt1 ; 
 	end if;
-END
+END //
