@@ -1,0 +1,8 @@
+# 查看Mysql当前事物
+
+select * from information_schema.innodb_trx;
+
+# 查看当前运行的事务的账户和事务开始的时间,及其事务语句
+
+ select a.id,a.user,a.host,b.trx_started,b.trx_query from information_schema.processlist a right 
+ outer join information_schema.innodb_trx b on a.id = b.trx_mysql_thread_id;
