@@ -6,3 +6,21 @@ select * from information_schema.innodb_trx;
 
  select a.id,a.user,a.host,b.trx_started,b.trx_query from information_schema.processlist a right 
  outer join information_schema.innodb_trx b on a.id = b.trx_mysql_thread_id;
+
+# 查看当前锁定的事物
+
+SELECT * FROM INFORMATION_SCHEMA.INNODB_LOCKS;
+
+# 查看当前等锁的事物
+
+SELECT * FROM INFORMATION_SCHEMA.INNODB_LOCK_WAITS;
+
+# 查看哪些表锁住了
+
+show OPEN TABLES where In_use > 0;
+
+
+# 查看服务器状态
+
+mysqladmin -uroot -p -h 192.168.29.251 status
+
