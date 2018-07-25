@@ -1,0 +1,48 @@
+delimiter //
+CREATE PROCEDURE insert_into_cellinfo_procedure ()
+
+BEGIN
+DECLARE a INT DEFAULT 0 ;
+DECLARE b INT DEFAULT 1000 ;
+
+	lp1 :
+LOOP
+	INSERT INTO cellinfo SELECT
+		lac,
+		ci,
+		lat,
+		lon,
+		acc,
+		date,
+		validity,
+		addr,
+		province,
+		city,
+		district,
+		township,
+		NULL b_lng,
+		NULL b_lat,
+		NULL g_lng,
+		NULL g_lat
+	FROM
+		cellinfo_v2
+	WHERE
+		mnc = 0
+	AND lac >= a
+	AND lac < b
+	AND ci <= 65535 ;
+	SET a = a + 1000 ;
+	SET b = b + 1000 ;
+	IF b > 1000 THEN
+		LEAVE lp1 ;
+	END
+	IF ;
+	END
+	LOOP
+		;
+	END//
+	
+	
+	
+	
+insert into cellinfo SELECT lac,ci,lat,lon,acc,date,validity,addr,province,city,district,township,null b_lng,null b_lat,null g_lng,null g_lat from cellinfo_v2 where mnc=0 and lac>=a and lac<b and ci<=65535;
