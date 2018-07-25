@@ -1,0 +1,302 @@
+1、触发器
+	create trigger 触发器名称 trigger_time trigger_event on 表名 for eache row trigger_stmt;
+trigger_time表示触发器的出发时间，可以是before或者after,分别表示在检查约束前或后触发；
+trigger_event表示触发器的触发事件，可以是insert update delete;
+对于同一表相同触发时间、相同触发事件的情况下，只能定义一个触发器。
+for each row 表示是行级触发的，也就是以行为单位。
+create trigger t1_trigger before insert on t1 for each row update t1_n set n=n+1;
+触发器只能创建在永久表上，不能对临时表创建触发器。
+如果触发器要做的事情比较多，也就是触发器的trigger_stmt比较长的时候，可以用begine和啊end来表示触发器的开始
+和结束，把具体的操作卸载begin和end之间。
+delimiter //更改sql语句的分隔符。
+delimiter ;
+对于update,old和new可以用；对于delete，只有old可以用；对于insert，只有new可以用。
+mysql中触发器的操作是按照before触发器、行处理、after触发器的顺序执行的，只要有一步错，
+操作就会报错而拒绝执行。触发器是以行级为单位进行触发的。因此过于复杂的触发器对性能产生较大的影响。
+触发器是mysql自动调用的。
+2、存储过程
+	create procedure 存储过程名（参数列表） 其他修饰符 存储过程体。
+	调用方法：call 存储过程名（参数列表）
+	2、1 delimiter //
+			create procedure test()
+			begin
+			create table t1(m int,n int);
+			end
+			//
+	2、2 create procedure emp(in m int,in n int)
+			begin
+			insert into test values(m,n);
+			end
+			//
+	2、3 参数类型有三种：in out inout
+		in:表示只是用来输入
+		out:表示只是用来输出
+		inout:表示可以用来输入，也可以用来输出。
+		show procedure status like 't2'\G;
+		存储过程存储在information_schema数据库的routines表中。
+		drop procedure [if exists] 存储过程名
+	2、4 存储过程中使用变量
+		declare 变量名1[,变量名2...] 变量类型 [defalut 默认值],变量可以直接赋值，还可以通过查询赋值。。
+		set 变量名1=表达式1[,变量名2=表达式2...];
+		select 列名列表 into 变量列表 from 表名 其他语句；
+3、流程控制
+	3、1 流程控制
+		if、case、loop、leave、iterate、repeat、while
+	3、2 if
+		if 条件表达式 then 语句
+			[elseif 条件表达式 then 语句] ....
+			[else 语句]
+		end if
+	3、3 范例
+		delimiter //
+		create procedure test()
+		begin
+		declare x int defalut 0;
+		select m into x from t1 limit 1;
+		if x<10 then select '结果小于10';
+		else select '结果大于等于10';
+		end if;
+		end //
+	3、4 case
+		case 表达式					case
+			when 值 then 语句			when 表达式 then 语句
+			when 值 then 语句			when 表达式 then 语句
+			。。。							。。。
+			[else 语句]						[else 语句]
+		end case					end case
+	3、5 范例
+		delimiter //
+		create procedure test()
+		begin
+			declare x,y int default 0;
+			select * into x,y from t1 limit 1;
+			case x
+			when 4 then select 'R1' AS 'R1';
+			else select 'R2' AS 'R2';
+			end case;
+			case
+			when y=5 then select 'R3' AS 'R3';
+			else select 'R4' as 'R4';
+			end case;
+		end //
+	3、6 loop(如果循环语句中没有相应的推出循环的语句，那么loop将会是一个死循环)
+		[标号:] loop
+				循环语句
+			end loop[标号]
+	3、7 leave
+		leave 标号: leave语句用来从标注的流程构造中退出，通常和begin...end或者循环一起使用
+	3/8 leave and loop
+		delimiter //
+		create procedure test()
+		begin
+			declare x int default 0;
+			set x=0;
+			ins:loop
+			insert into test values(x,x*x);
+			if x=10 then leave ins;
+			end if;
+			set x=x+1;
+			end loop ins;
+		end //
+	3/9 iterate:必须用在循环中，作用是跳过当前循环的剩下的语句，直接进入下一个循环。
+		delimiter //
+		create procedure test()
+		begin
+			declare x int default 0;
+			set x=1;
+			ins:loop
+			set x=x+1;
+			if x=10 then leave ins;
+			end if;
+			if mod(x,3)=0 then iterate ins;
+			end if;
+			insert into test values(x,x*x);
+			end loop ins;
+		end //
+	3/10 repeat and while 虽然loop可以实现循环，但是要想实现有条件的循环控制语句，还需要repeat 和while。
+		[标号:] repeat 满足某个条件才退出，先循环在判断，因此至少循环一次
+			循环语句
+			until 条件语句
+			end repeat [标号]
+			
+		[标号:] while 条件语句  do 满足某个条件才执行，先判断在循环，所以循环至少执行0次
+			循环语句
+			end while [标号]
+	
+	3/11
+		delimiter //
+		begin
+			declare x int default 0;
+			while x<10 do
+				insert into test values(x,x*x);
+				set x=x+1;
+			end while;
+		end //
+		
+	3/12 当我们在存储过程中遇到了添加多条数据，而主键重复的时候，该怎么办呢？
+		这时候我们可以定义一个异常处理的解决方案，也可以称为条件。
+		declare 处理类型 handler for 错误代号 处理语句;
+		处理类型可分为：1、continue:表示继续执行
+						2、exit:表示终止执行
+						3、undo:表示还不支持
+		错误代号，可以是sqlstate,也可以是msyql_error_code,前者是通用的错误代码，后者是MySQL内部使用的，它的
+		取值范围可以为：sqlstate [value] sqlstate_value | condition_name | sqlwarning |not found |sqlexecption |mysql_error_code
+		而sqlwarning是对所有已O1开头的sqlstate代码的速记，而not found则是对所有以O2开头的sqlstate代码的速记，
+		而sqlexception则是不属于sqlwarning和not found的其他情况。
+	3/13 delimiter //
+		create procedure test()
+		begin
+			declare continue handler for sqlstate '23000'
+			select '插入重复值' as '插入重复值';
+			insert into test values(4,8),(5,6),(4,10),(6,9);
+		end //
+		
+		create procedure test()
+		begin
+			declare continue handler for sqlstate '23000'
+			select '插入重复值' as '插入重复值';
+			insert into test values(4,8);
+			insert into test values(4,9);
+			insert into test values(5,10);
+			insert into test values(3,10);
+		end //
+	3/14 游标
+		游标的使用步骤分为：声明、打开、取值、关闭。
+	3/15 delimiter //
+		create procedure test()
+		begin
+			declare x,y int default 0;
+			declare c cursor for select * from m;
+			declare exit handler for not found close c;
+			open c;
+			repeat
+			fetch c into x,y;
+			if x^=7 then
+			insert into n values(x*x,y*y);
+			end if ;
+			until 0 end repeat;
+		end //
+	3/16 游标的声明语法：declare 游标名称 cursor for 查询语句;
+		打开游标的语法: open 游标名称
+		获取游标的数据：fetch 游标名称 into 变量名1[,变量名2...]
+		关闭游标的语法：close 游标名称
+		游标使用须知：对某个表按照循环的处理，判断循环结束的条件是捕获not found的条件，
+		当fetch找不到下一条记录的时候，就会关闭游标然后退出。
+		在SQL中，declare定义的顺序是：变量、条件、游标、应用程序。
+	3/17 存储过程优点：
+		1、执行速度快。我们的每个SQL语句都需要进行编译，然后再执行，但是存储过程是编译好的额，直接运行就好。
+		2、减少网络流量。我们传输一个存储过程比我们传输大量的SQL语句的开销要小得多
+		3、提高系统安全性。存储过程可以使用权限控制，而且参数化的存储过程可以有效的防止SQL注入攻击。
+		4、耦合性降低。当我们的表结构发生了调整或变动之后，我们可以相应的修改存储过程，一般应用程序只需要修改的地方比较小了。
+		5、重用性强。写好存储过程之后，想再次调用只需要一个名字而已，也就是‘一次编写，随处使用’。
+	3/18 存储过程缺点
+		1、移植性差。和数据库是绑定的。
+		2、修改不方便。一些诸如Bug发现会比较晚
+		3、优势不明显和赘余功能
+	3/20 存储过程和函数的优势是可以将数据的处理放在数据库服务器上进行，避免将大量的结果集传输给客户端，
+	减少了数据传输的压力，因此也减少了宽带和服务器的压力，一般不建议在存储过程中运行大量的复杂的运算。
+	
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

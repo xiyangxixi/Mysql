@@ -1,0 +1,126 @@
+1、事务
+	事务的四大特性：原子性、一致性、隔离性、持久性。
+	所谓的原子性，是指整个数据库的每个事物都是不可分割的单位
+	所谓的一致性，是指将数据库从一种一致性状态转换为下一种一致性状态，数据的完整性约束没有被破坏
+	所谓隔离性，是指一个事务的影响在该事务提交前对其他事务都不可见，它通过锁机制来实现
+	所谓持久性，是指事务一旦被提交，其结果就是永久性的
+2、InnoDB的实现
+	隔离性由锁机制来实现。原子性、一致性和持久性都是通过数据库的redo日志和undo日志来完成。
+	redo日志就是重做日志，它记录了事务的行为，可以很好的通过它来进行重做。
+	当我们对数据库进行修改时，数据库不但会产生redo日志，还会产生undo日志，当我们使用rollback时，就可以利用undo信息将数据回滚
+	当InnoDB存储引擎回滚时，实际上它做的是与之前相反的工作。对于每个insert，InnoDB做的是delete,对于每个update,InnoDB做的是相反的update.
+	默认情况下，mysql事务是自动提交的，我们可以设置set autocommit=0来禁用当前会话的自动提交。
+	还可以使用begin start transaction显示开始一个事务，
+	commit rollback savepoint release savepoint rollback to [savepoint]
+	rollback to 保存点，并不会结束整个事务。
+	select @@completion_type;利用这个可以查询completion_type的值，其值可以为0/1/2.
+	truncate table的时候，它是先drop整张表，再create该表，undo日志无法还原相应的记录。
+3、隔离级别
+	1、read uncommitted 2 read committed 3 repeatable read 4 serializable
+	InnoDB默认支持的隔离级别为repeatable read,可以用select @@tx_isolation来查看值。
+	后面Mysql版本支持分布式事务，分为事务管理器和资源管理器。
+4、InnoDB
+	InnoDB存储引擎既支持行级锁，也支持表级锁，默认使用行级锁。
+	表级锁锁住一个表，开销小，加锁快，不会出现死锁，锁定粒度大，发生锁冲突的概率更高，并发度低。
+	行级锁锁住一条记录，开销大，加锁慢，发生锁冲突的概率低，并发度很高。
+	表级锁适合以查询为主，行级锁适合于事务。
+	查看所有引擎：show engines;
+	查看某个引擎的具体情况：show engine 引擎名 status\G;
+4、1
+	InnoDB：支持事务，采用行级锁
+4、2 数据库实现隔离事务的方式
+	1、在操作数据之前，先对其枷锁，防止其他事务对数据进行更改。
+	2、不加任何锁，通过生成一系列特定请求时间点的一致性数据快照，并通过快照来提供一致性读取。
+		被称作数据多版本并发控制，也就是多版本数据库，一般称为MVCC或MCC。
+4、3 InnoDB实现了两种类型的锁
+	1、共享锁(S)：允许一个事务去读一行，阻止其他事务获得相同数据集的排它锁。
+	2、排他锁(X)：允许获得排他锁的事务更新数据，阻止其他事物获得相同数据集的共享读锁和排他写锁。
+	3、意向共享锁(IS)：事务打算给数据行加共享锁，事务在给一个数据行加共享锁之前必须先取得该表的IS锁
+	4、意向排他锁(IX)：事务打算给数据行加排他锁，事务在给一个数据行加排他锁之前必须先取得该表的IX锁。
+4、4 如果在加一个锁的时候，另一个锁也可以加上去，那么就是索兼容；如果加上一个锁之后，拒绝其他的锁加上，那么就是锁冲突。
+4、5 各种锁的兼容和冲突情况如下：
+	1、X和所有锁都冲突
+	2、IX兼容IX和IS
+	3、S兼容S和IS
+	4、IS兼容IS、IX和S
+4/6 显示的给数据集枷锁
+	1、共享锁(S): select *from test where ... lock in share mode;
+	2、排他锁(X)：select *from test where ... for update;
+4/7 查询innodb事务超时时间：select @@innodb_lock_wait_timeout;	
+4/8 建议在InnoDB表中使用主键索引，最好是自己建立一个主键。虽然它会自动创建一个，但是效率不高。
+4/9 查看默认存储引擎：show variables like 'default_storage_engine';我们可以在创建完一个表之后，
+利用语句来指定或修改存储引擎：alter table 表名 engine=引擎名;
+5、MyISAM
+	只支持表级锁，分两种：表共享读锁（table read lock）和表独占写锁（table write lock）
+	对MyISAM表的读操作，不会阻塞其他用户对同一个表的读请求，但是会阻塞对同一个表的写请求，因为写操作是独占的。
+	对于MyISAM表的写操作，会阻塞其他用户对同一表的读操作和写操作。
+	锁表：lock  table 表名 read/wtite;
+	释放表锁：unlock tables;
+	读和写是串行的，但是在一定条件下，MyISAM也支持查询和插入操作的并发进行，取决于concurrent_insert的取值。
+	1、取值为0，表示不允许并发插入
+	2、取值为1，如果MyISAM表中没有空洞，指的是表中没有被删除的行，那么MyISAM可以从另一个进程的尾部插入记录，
+	它并不影响另一个进程中标的读取。
+	3、取值为2，无论MyISAM表中有没有空洞，都允许在表中进行并发的插入。
+	可以通过select @@concurrent_insert来查询。mysql认为写操作比读操作重要。
+6、数据库组成
+	1、可通过语句查询Mysql的data目录:show variables like '%dir%';
+	2 myisam支持三种不同的存储格式：
+		1、静态表。每个字段都是非变长的字段，每个记录都是固定长度的，优点是存储速度快，缓存也容易，
+			出现了故障也容易恢复，缺点是占用空间太大，比动态表要多；静态表的数据在存储的时候回按照
+			列的宽度定义不足空格，但是在应用访问的时候并不会得到这些空格，这些空格在返回给用户之前已经处理掉。
+			但是有一个问题，如果保存的内容原本就有空格，那么在返回的时候也会被去掉。
+		2 动态表。可以包含变长字段，记录不是固定长度的，这样的存储的优点是占用空间相对较少，但是频繁的
+			更新删除记录会产生碎片。
+		3 对于Myisam表的碎片，我们可以使用optimize table 语句 或直接使用myisamchk -r 命令来改善性能。
+		4 压缩表。压缩表是使用myisampack来创建的，它占据非常小的空间，每条记录都是单独被压缩的，访问时的开支也是非常小的。
+		5 查看引擎信息：show engine innodb status \G;
+			查看Io信息：show variables like 'innodb_%io_status';
+			查看IO线程：show variables like  'innodb_%_size';
+7、InnoDB的特性：插入缓存、两次写、自适应哈希索引。
+	存储表和索引的方式：使用共享表空间存储和使用夺标空间存储。
+	默认情况下，InnoDB有一个共享表空间ibdata1,所有数据都存在这个表空间内，如果启用了innodb_file_per_table,
+	则每张表的数据可以单独放在一个表空间内。
+8 csv引擎：一旦使用了CSV引擎，则每个字段都不能为空。
+	导出为csv文件：select * from t1 into outfile '/var/lib/mysql-files/t1.csv' fields terminated by ','  optionally enclosed by '"' escaped by '"' lines terminated by '\r\n'
+	导入csv文件：load data infile '/var/lib/mysql-files/t1.csv' into table t1 fields terminated by ','
+	 optionally enclosed by '"' escaped by '"' lines terminated by '\r\n';(如果有字符问题，可以加character set utf8);
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

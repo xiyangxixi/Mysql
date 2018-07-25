@@ -1,0 +1,257 @@
+1、用户授权
+	grant all privileges on *.* to user@192.168.187.210 identified by '123456';
+	grant  replication slave on *.* to user@192.168.187.210 identified by '123456';
+	查看日志开启状态：show variables like '%log%';
+	flush logs;show master status\G;reset master;
+2、主从复制
+	备份数据：mysqldump -u 用户名 -p 密码 数据库 -l -F > '文件名';
+	-F:flush logs,生成新的日志文件; -l:lock，读锁，此时无法写操作。
+	查看二进制文件：mysqlbinlog --no-defaults 文件
+	恢复数据：mysql -u 用户名 密码 -v -f < sql文件
+	-v:查看导入的详细信息，-f:遇到错误忽略或者跳过,是force的简写。
+	恢复二进制文件:mysqlbinlog --no-defaults 文件名 |mysql -u 用户名 -p 密码
+	flush tables with read lock;
+3、mysql常用命令
+	start slave/stop slave/show slave status/show master logs/change master to /show processlist/
+ 如果主从出现问题，可使用一下方法处理
+ 1、set global sql_slave_skip_conunter=1;
+ 2、执行 stop slave;查看master当前日，然后修改slave的日志文件和pos，然后重启slave;
+4、分区理论
+	大表拆成小表：垂直分表(竖切)和水平分表(横切)
+	mysql分区技术不同于水平分表，它是在逻辑层进行的水平分表，对于应用程序而言还是一张表。
+	共四种分区类型：
+	RANGE分区、LIST分区、HASH分区、KEY分区。
+	RANGE分区：基于术语一个给定连续空间的别值，把多行分配给分区
+	LIST分区：类似于按RANGE分区，区别是在于LIST分区是基于列值匹配一个离散值集合中的某个值来进行选择。
+	HASH分区：基于用户定义的表达式的返回值来进行选择的分区，该表达式使用将要插入列表中的这些行
+	的列值进行计算，这个函数可以包含MYSQL中有效的、产生非负整数值得任何表达式。
+	KEY分区：类似于HASH分区，区别在于KEY分区只支持计算一列或多列，且MYSQL服务器提供其自身的
+	HASH函数。
+5、RANGE分区
+	create table 表名(各个列定义)
+	partition by range(某个字段名)(
+	  partition p0 values less than(6),
+	  partition p1 values less than(11),
+	  partition p2 values less than(16),
+	  partition p3 values less than(21));
+6、LIST分区 通常用于属于枚举类型的情况
+	create table 表名(各列)
+	partition by list(字段名)(
+	partition pn values in(3,5,6,9),
+	partition pe values in(1,2,10)
+	...
+	);
+7、HASH分区 主要用于确保数据在预先确定数目的分区中平均分布。
+	create table 表名(各个字段)
+	partition by hash(字段名)
+	partition 4;
+	哈希分区多用于测试。
+8、KEY分区 它的key可以不是整数类型，比如字符砖等类型的字段。
+	mysql簇(cluster)使用函数md5()来实现key分区。
+9、RANGE分区的优点在于适合于日期类型，支持符合分区，缺点是有限的分区数目，他一般只针对某一列。
+	LIST分区适合于有固定取值的列，支持符合分区，缺点是有限的分区，插入记录在这一列的值不在LIST中，
+则数据丢失，他一般只针对某一列。
+	HASH分区的优点是线性的HASH使得增加、删除和合并分区更加快捷，缺点是线性HASH的数据分布不均匀，而
+一般HASH的数据分布较为均匀，一般只针对一列。
+	KEY分区的优点在于列可以为字符型等其他非Int类型，缺点是效率较之前的低，因为函数为复杂的函数，
+比如md5或者sha函数，一般只针对一列。
+10、插件
+	show plugins;查看插件
+11、mysql内置函数
+  1、字符串函数
+	concat() 连接字符串 lcase() 转换成小写 ucase() 转换成大写 length() 字符串长度
+	ltrim()去除前段空格 rtrim() 去除后端空格 repeat(string.count) 重复count次
+	replace(str,search_str,replace_str) 在str中用replace_str替换search_str
+	substring(str,position[,length]) 在str的position开始，取length个字符，这里的第一个字符是1.
+	space(count) 生成count个空格
+  2、数学函数
+	bin(decimal_number) 十进制转二进制
+	ceiling(number) 向上取整
+	floor(number) 向下取整 max(max1,max2) 取最大值 min(min1,min2) 取最小值
+	sqrt(number) 开平方 rand() 返回随机值 
+  3、日期函数
+	curdate() 返回当前日期 curtime() 返回当前时间 now() 返回当前的日期时间
+	unix_timestamp(date) 返回当前date的Unix时间戳
+	from_unixtime(timestamp) 返回Unix时间戳的日期只
+	week(date) 返回当前date为一年中的第几周
+	year(date) 返回日期date的年份 datediff(expr,expr2) 返回相差天数
+12、预处理语句
+	1、设置预处理，船体一个数据作为一个where判断条件。
+		prepare test from `select * from t1 where id>?`;
+		set @i=1;
+		execute test using@i;
+		删除预处理：drop prepare test;
+13、事务处理
+	关闭自动提交功能：set autocommit=0
+	从表中删除一条记录：delete from t1 where id=?;
+	做一个还原点：savapoint test1;
+	再次删除一条记录：delete from t1 where id=?;
+	在做一个还原点：savapoint test2;
+	还原到test1: rollback to test1;
+	返回到最原始的点: rollback;
+	修改表的引擎：alter table test engine=innodb;
+	\d //切换结束符 \d ;
+	查看procedure的status信息：show procedure status \G;
+	查看procedure具体信息：show create procedure test\G;
+	当我们需要清空表的时候，最好不要用delete from tablename,而是使用
+	truncate table tablename或者truncate tablename;
+12、正则表达式
+	regexp ^:在字符串的开始处进行匹配
+			$:在字符串的末尾处进行匹配
+			.:匹配任意单个字符，也包括换行符
+			[...]:匹配出括号内的任意字符
+			[^...]:匹配不出现括号内的任意字符
+			a*:匹配零个或多个a(包括空格)
+			a？:零个或者多个a
+			a+:一个或者多个a
+			a1|a2:匹配a1或者a2
+			a(m):m个a
+			a(m,):匹配至少M个a
+			a(m,n):匹配m到n个a
+			a(,n):0到n个a
+			(.....):将模式元素组成单一元素
+			select name,email from test where email regexp '@163.com$';
+			select name,email from test where email like '%@163.com';
+			select rand() from dual;
+			select * from test order by ran();
+	select id,bit_or(kind) from test group by id;
+	bit_or、bir_and函数可以完成统计工作
+	? opt%; ? reg%;
+	show status like 'com_select%';可查询出select的次数，同理，可查询其他
+	使用desc或explain能够查看分析SQL语句的执行。
+	
+	show status like 'handler_read%';结果值越大则效率越低
+	分析表：analyze table 表名
+	优化表：optimize table 表名
+	检查表：check table 表名
+	大量导出文件：select * from t1 into outfile '';
+	导入文件：load data infile '' into table test;
+	在导入前执行set autocommit=0来关闭自动提交事务，在导入结束之后执行set autocommit=1来恢复自动提交，可以提高效率。
+	当从一个文件中装在一个表时，使用load data infile通常比使用很多inset语句来的快20倍
+	select * from t1 where id in (select uid from t2);可以优化为
+	select t1.* from t1,t2 where t1.id=t2.uid;此时才是使用两个表的索引。
+	procedure analyse()对当前应用的表进行分析：
+	select * from test procedure analyse()\G;
+	对表枷锁：lock table test read;
+	读锁对我们在做备份大量数据的时候非常有用，如
+	mysqldump -u root -p dateabase >test.sql
+	写锁比读锁更加严格的锁定
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	

@@ -1,0 +1,582 @@
+1、mysql的where子句的字符串比较是不区分大小写的，可以使用BINARY来设定where子句
+的字符串比较是区分大小写的。
+2、默认情况下UNION操作符已经删除了重复的数据
+3、使用with rollup可以实现分组统计数据基础上再进行相同的统计(SUM,AVG,COUNT)
+mysql> SELECT name, SUM(singin) as singin_count FROM  employee_tbl GROUP BY name WITH ROLLUP;
++--------+--------------+
+| name   | singin_count |
++--------+--------------+
+| 小丽   |            2 |
+| 小明   |            7 |
+| 小王   |            7 |
+| NULL   |           16 |
++--------+--------------+
+4 rows in set (0.00 sec)
+
+mysql> SELECT name, SUM(singin) as singin_count FROM  employee_tbl GROUP BY name;
++--------+--------------+
+| name   | singin_count |
++--------+--------------+
+| 小丽   |            2 |
+| 小明   |            7 |
+| 小王   |            7 |
++--------+--------------+
+3 rows in set (0.00 sec)
+4、可以使用coalesce来设置一个取代null的名称
+select coalesce(a,b,c);如果a为空，则取b，b为空，选c
+mysql> SELECT coalesce(name, '总数'), SUM(singin) as singin_count FROM  employee_tbl GROUP BY name WITH ROLLUP;
++--------------------------+--------------+
+| coalesce(name, '总数')   | singin_count |
++--------------------------+--------------+
+| 小丽                     |            2 |
+| 小明                     |            7 |
+| 小王                     |            7 |
+| 总数                     |           16 |
++--------------------------+--------------+
+4 rows in set (0.00 sec)
+
+5、join
+
+INNER JOIN（内连接,或等值连接）：获取两个表中字段匹配关系的记录。
+LEFT JOIN（左连接）：获取左表所有记录，即使右表没有对应匹配的记录。
+RIGHT JOIN（右连接）： 与 LEFT JOIN 相反，用于获取右表所有记录，即使左表没有对应匹配的记录。
+
+INNER JOIN
+mysql> SELECT a.runoob_id, a.runoob_author, b.runoob_count FROM runoob_tbl a INNER JOIN tcount_tbl b ON a.runoob_author = b.runoob_author;
++-------------+-----------------+----------------+
+| a.runoob_id | a.runoob_author | b.runoob_count |
++-------------+-----------------+----------------+
+| 1           | 菜鸟教程    | 10             |
+| 2           | 菜鸟教程    | 10             |
+| 3           | RUNOOB.COM      | 20             |
+| 4           | RUNOOB.COM      | 20             |
++-------------+-----------------+----------------+
+4 rows in set (0.00 sec)
+
+WHERE 子句
+mysql> SELECT a.runoob_id, a.runoob_author, b.runoob_count FROM runoob_tbl a, tcount_tbl b WHERE a.runoob_author = b.runoob_author;
++-------------+-----------------+----------------+
+| a.runoob_id | a.runoob_author | b.runoob_count |
++-------------+-----------------+----------------+
+| 1           | 菜鸟教程    | 10             |
+| 2           | 菜鸟教程    | 10             |
+| 3           | RUNOOB.COM      | 20             |
+| 4           | RUNOOB.COM      | 20             |
++-------------+-----------------+----------------+
+4 rows in set (0.01 sec)
+
+LEFT JOIN
+mysql> SELECT a.runoob_id, a.runoob_author, b.runoob_count FROM runoob_tbl a LEFT JOIN tcount_tbl b ON a.runoob_author = b.runoob_author;
++-------------+-----------------+----------------+
+| a.runoob_id | a.runoob_author | b.runoob_count |
++-------------+-----------------+----------------+
+| 1           | 菜鸟教程    | 10             |
+| 2           | 菜鸟教程    | 10             |
+| 3           | RUNOOB.COM      | 20             |
+| 4           | RUNOOB.COM      | 20             |
+| 5           | FK              | NULL           |
++-------------+-----------------+----------------+
+5 rows in set (0.01 sec)
+
+RIGHT JOIN
+mysql> SELECT a.runoob_id, a.runoob_author, b.runoob_count FROM runoob_tbl a RIGHT JOIN tcount_tbl b ON a.runoob_author = b.runoob_author;
++-------------+-----------------+----------------+
+| a.runoob_id | a.runoob_author | b.runoob_count |
++-------------+-----------------+----------------+
+| 1           | 菜鸟教程    | 10             |
+| 2           | 菜鸟教程    | 10             |
+| 3           | RUNOOB.COM      | 20             |
+| 4           | RUNOOB.COM      | 20             |
+| NULL        | NULL            | 22             |
++-------------+-----------------+----------------+
+5 rows in set (0.01 sec)
+
+IS NULL: 当列的值是 NULL,此运算符返回 true。
+IS NOT NULL: 当列的值不为 NULL, 运算符返回 true。
+<=>: 比较操作符（不同于=运算符），当比较的的两个值为 NULL 时返回 true。
+
+6、正则
+查找name字段中以'st'为开头的所有数据：
+
+mysql> SELECT name FROM person_tbl WHERE name REGEXP '^st';
+查找name字段中以'ok'为结尾的所有数据：
+
+mysql> SELECT name FROM person_tbl WHERE name REGEXP 'ok$';
+查找name字段中包含'mar'字符串的所有数据：
+
+mysql> SELECT name FROM person_tbl WHERE name REGEXP 'mar';
+查找name字段中以元音字符开头或以'ok'字符串结尾的所有数据：
+
+mysql> SELECT name FROM person_tbl WHERE name REGEXP '^[aeiou]|ok$';
+
+mysql> select * from employee_tbl t where t.name regexp '明$';
++----+--------+---------------------+--------+
+| id | name   | date                | singin |
++----+--------+---------------------+--------+
+|  1 | 小明   | 2016-04-22 15:25:33 |      1 |
+|  5 | 小明   | 2016-04-11 15:26:40 |      4 |
+|  6 | 小明   | 2016-04-04 15:26:54 |      2 |
++----+--------+---------------------+--------+
+3 rows in set (0.00 sec)
+
+mysql> select * from employee_tbl t where t.name regexp '明';
++----+--------+---------------------+--------+
+| id | name   | date                | singin |
++----+--------+---------------------+--------+
+|  1 | 小明   | 2016-04-22 15:25:33 |      1 |
+|  5 | 小明   | 2016-04-11 15:26:40 |      4 |
+|  6 | 小明   | 2016-04-04 15:26:54 |      2 |
++----+--------+---------------------+--------+
+3 rows in set (0.00 sec)
+
+7、事务
+事务是必须满足4个条件（ACID）：：原子性（Atomicity，或称不可分割性）、一致性（Consistency）、隔离性（Isolation，又称独立性）、持久性（Durability）。
+
+原子性：一个事务（transaction）中的所有操作，要么全部完成，要么全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被回滚（Rollback）到事务开始前的状态，就像这个事务从来没有执行过一样。
+
+一致性：在事务开始之前和事务结束以后，数据库的完整性没有被破坏。这表示写入的资料必须完全符合所有的预设规则，这包含资料的精确度、串联性以及后续数据库可以自发性地完成预定的工作。
+
+隔离性：数据库允许多个并发事务同时对其数据进行读写和修改的能力，隔离性可以防止多个事务并发执行时由于交叉执行而导致数据的不一致。事务隔离分为不同级别，包括读未提交（Read uncommitted）、读提交（read committed）、可重复读（repeatable read）和串行化（Serializable）。
+
+持久性：事务处理结束后，对数据的修改就是永久的，即便系统故障也不会丢失。
+
+事务控制语句：
+BEGIN或START TRANSACTION；显式地开启一个事务；
+
+COMMIT；也可以使用COMMIT WORK，不过二者是等价的。COMMIT会提交事务，并使已对数据库进行的所有修改称为永久性的；
+
+ROLLBACK；有可以使用ROLLBACK WORK，不过二者是等价的。回滚会结束用户的事务，并撤销正在进行的所有未提交的修改；
+
+SAVEPOINT identifier；SAVEPOINT允许在事务中创建一个保存点，一个事务中可以有多个SAVEPOINT；
+
+RELEASE SAVEPOINT identifier；删除一个事务的保存点，当没有指定的保存点时，执行该语句会抛出一个异常；
+
+ROLLBACK TO identifier；把事务回滚到标记点；
+
+SET TRANSACTION；用来设置事务的隔离级别。InnoDB存储引擎提供事务的隔离级别有READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ和SERIALIZABLE。
+
+MYSQL 事务处理主要有两种方法：
+1、用 BEGIN, ROLLBACK, COMMIT来实现
+
+BEGIN 开始一个事务
+ROLLBACK 事务回滚
+COMMIT 事务确认
+2、直接用 SET 来改变 MySQL 的自动提交模式:
+
+SET AUTOCOMMIT=0 禁止自动提交
+SET AUTOCOMMIT=1 开启自动提交
+
+8、alter
+mysql> show columns from test;
++--------+------------+------+-----+---------+-------+
+| Field  | Type       | Null | Key | Default | Extra |
++--------+------------+------+-----+---------+-------+
+| id     | int(11)    | NO   |     | NULL    |       |
+| name   | char(10)   | NO   |     |         |       |
+| date   | datetime   | NO   |     | NULL    |       |
+| singin | tinyint(4) | NO   |     | 0       |       |
++--------+------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+mysql> show columns from test;
++--------+------------+------+-----+---------+-------+
+| Field  | Type       | Null | Key | Default | Extra |
++--------+------------+------+-----+---------+-------+
+| id     | int(11)    | NO   |     | NULL    |       |
+| name   | char(10)   | NO   |     |         |       |
+| date   | datetime   | NO   |     | NULL    |       |
+| singin | tinyint(4) | NO   |     | 0       |       |
++--------+------------+------+-----+---------+-------+
+4 rows in set (0.00 sec)
+
+mysql> alter table test add phone varchar(13) default null;
+Query OK, 0 rows affected (0.19 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| id     | int(11)     | NO   |     | NULL    |       |
+| name   | char(10)    | NO   |     |         |       |
+| date   | datetime    | NO   |     | NULL    |       |
+| singin | tinyint(4)  | NO   |     | 0       |       |
+| phone  | varchar(13) | YES  |     | NULL    |       |
++--------+-------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+
+mysql> alter table test drop phone;
+Query OK, 0 rows affected (0.08 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+	after
+mysql> alter table test add phone varchar(13) default null after name;
+Query OK, 0 rows affected (0.05 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| id     | int(11)     | NO   |     | NULL    |       |
+| name   | char(10)    | NO   |     |         |       |
+| phone  | varchar(13) | YES  |     | NULL    |       |
+| date   | datetime    | NO   |     | NULL    |       |
+| singin | tinyint(4)  | NO   |     | 0       |       |
++--------+-------------+------+-----+---------+-------+
+5 rows in set (0.01 sec)
+
+	first
+mysql> alter table test add address varchar(13) default null first;
+Query OK, 0 rows affected (0.05 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| address | varchar(13) | YES  |     | NULL    |       |
+| id      | int(11)     | NO   |     | NULL    |       |
+| name    | char(10)    | NO   |     |         |       |
+| phone   | varchar(13) | YES  |     | NULL    |       |
+| date    | datetime    | NO   |     | NULL    |       |
+| singin  | tinyint(4)  | NO   |     | 0       |       |
++---------+-------------+------+-----+---------+-------+
+6 rows in set (0.00 sec)
+
+mysql> ALTER TABLE testalter_tbl CHANGE i j BIGINT;
+mysql> ALTER TABLE testalter_tbl CHANGE j j INT;
+
+mysql> alter table test change phone number varchar(13);
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| id     | int(11)     | NO   |     | NULL    |       |
+| name   | char(10)    | NO   |     |         |       |
+| number | varchar(13) | YES  |     | NULL    |       |
+| date   | datetime    | NO   |     | NULL    |       |
+| singin | tinyint(4)  | NO   |     | 0       |       |
++--------+-------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+
+mysql> 
+
+mysql> alter table test alter number set default 123456;
+Query OK, 0 rows affected (0.13 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| id     | int(11)     | NO   |     | NULL    |       |
+| name   | char(10)    | NO   |     |         |       |
+| number | varchar(13) | YES  |     | 123456  |       |
+| date   | datetime    | NO   |     | NULL    |       |
+| singin | tinyint(4)  | NO   |     | 0       |       |
++--------+-------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+
+mysql> alter table test alter number drop default;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show columns from test;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| id     | int(11)     | NO   |     | NULL    |       |
+| name   | char(10)    | NO   |     |         |       |
+| number | varchar(13) | YES  |     | NULL    |       |
+| date   | datetime    | NO   |     | NULL    |       |
+| singin | tinyint(4)  | NO   |     | 0       |       |
++--------+-------------+------+-----+---------+-------+
+5 rows in set (0.00 sec)
+
+mysql> show create table test;
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table | Create Table                                                                                                                                                                                                                                     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| test  | CREATE TABLE `test` (
+  `id` int(11) NOT NULL,
+  `name` char(10) NOT NULL DEFAULT '',
+  `number` varchar(13),
+  `date` datetime NOT NULL,
+  `singin` tinyint(4) NOT NULL DEFAULT '0' COMMENT '登录次数'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> alter table test ENGINE=MYISAM;
+Query OK, 6 rows affected (0.04 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+mysql> show create table test;
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table | Create Table                                                                                                                                                                                                                                     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| test  | CREATE TABLE `test` (
+  `id` int(11) NOT NULL,
+  `name` char(10) NOT NULL DEFAULT '',
+  `number` varchar(13),
+  `date` datetime NOT NULL,
+  `singin` tinyint(4) NOT NULL DEFAULT '0' COMMENT '登录次数'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+mysql> alter table test ENGINE=INNODB;
+Query OK, 6 rows affected (0.06 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+mysql> show create table test;
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table | Create Table                                                                                                                                                                                                                                     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| test  | CREATE TABLE `test` (
+  `id` int(11) NOT NULL,
+  `name` char(10) NOT NULL DEFAULT '',
+  `number` varchar(13),
+  `date` datetime NOT NULL,
+  `singin` tinyint(4) NOT NULL DEFAULT '0' COMMENT '登录次数'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8     |
++-------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+
+mysql> alter table test rename to emp;
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> alter table emp rename to test;
+Query OK, 0 rows affected (0.01 sec)
+
+普通索引
+create index indexname on tablename(columnname(length));
+
+修改表索引
+alter table tablename add index indexname(column_name);
+
+mysql> alter table test add index idx_id(id);
+Query OK, 0 rows affected (0.05 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> drop index idx_id on test;
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+唯一索引
+create unique index index_name on table_name(column_name(length)):
+
+修改表索引
+alter table table_name add unique index_name (column_name(length));
+
+有四种方式来添加数据表的索引：
+
+ALTER TABLE tbl_name ADD PRIMARY KEY (column_list): 该语句添加一个主键，这意味着索引值必须是唯一的，且不能为NULL。
+ALTER TABLE tbl_name ADD UNIQUE index_name (column_list): 这条语句创建索引的值必须是唯一的（除了NULL外，NULL可能会出现多次）。
+ALTER TABLE tbl_name ADD INDEX index_name (column_list): 添加普通索引，索引值可出现多次。
+ALTER TABLE tbl_name ADD FULLTEXT index_name (column_list):该语句指定了索引为 FULLTEXT ，用于全文索引。
+
+mysql> alter table test add index idx_id(id);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> show index from test\G;
+*************************** 1. row ***************************
+        Table: test
+   Non_unique: 1
+     Key_name: idx_id
+ Seq_in_index: 1
+  Column_name: id
+    Collation: A
+  Cardinality: 6
+     Sub_part: NULL
+       Packed: NULL
+         Null: 
+   Index_type: BTREE
+      Comment: 
+Index_comment: 
+1 row in set (0.00 sec)
+
+ERROR: 
+No query specified
+
+mysql> alter table test modify name  char(10) not null;
+Query OK, 0 rows affected (0.00 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+	数据类型
+mysql> alter table test modify num int unsigned;
+Query OK, 6 rows affected (0.06 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+数值类型
+MySQL支持所有标准SQL数值数据类型。
+
+这些类型包括严格数值数据类型(INTEGER、SMALLINT、DECIMAL和NUMERIC)，以及近似数值数据类型(FLOAT、REAL和DOUBLE PRECISION)。
+
+关键字INT是INTEGER的同义词，关键字DEC是DECIMAL的同义词。
+
+BIT数据类型保存位字段值，并且支持MyISAM、MEMORY、InnoDB和BDB表。
+
+作为SQL标准的扩展，MySQL也支持整数类型TINYINT、MEDIUMINT和BIGINT。下面的表显示了需要的每个整数类型的存储和范围。
+
+类型	大小	范围（有符号）	范围（无符号）	用途
+TINYINT	1 字节	(-128，127)	(0，255)	小整数值
+SMALLINT	2 字节	(-32 768，32 767)	(0，65 535)	大整数值
+MEDIUMINT	3 字节	(-8 388 608，8 388 607)	(0，16 777 215)	大整数值
+INT或INTEGER	4 字节	(-2 147 483 648，2 147 483 647)	(0，4 294 967 295)	大整数值
+BIGINT	8 字节	(-9 233 372 036 854 775 808，9 223 372 036 854 775 807)	(0，18 446 744 073 709 551 615)	极大整数值
+FLOAT	4 字节	(-3.402 823 466 E+38，-1.175 494 351 E-38)，0，(1.175 494 351 E-38，3.402 823 466 351 E+38)	0，(1.175 494 351 E-38，3.402 823 466 E+38)	单精度
+浮点数值
+DOUBLE	8 字节	(-1.797 693 134 862 315 7 E+308，-2.225 073 858 507 201 4 E-308)，0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)	0，(2.225 073 858 507 201 4 E-308，1.797 693 134 862 315 7 E+308)	双精度
+浮点数值
+DECIMAL	对DECIMAL(M,D) ，如果M>D，为M+2否则为D+2	依赖于M和D的值	依赖于M和D的值	小数值
+日期和时间类型
+表示时间值的日期和时间类型为DATETIME、DATE、TIMESTAMP、TIME和YEAR。
+
+每个时间类型有一个有效值范围和一个"零"值，当指定不合法的MySQL不能表示的值时使用"零"值。
+
+TIMESTAMP类型有专有的自动更新特性，将在后面描述。
+
+类型	大小
+(字节)	范围	格式	用途
+DATE	3	1000-01-01/9999-12-31	YYYY-MM-DD	日期值
+TIME	3	'-838:59:59'/'838:59:59'	HH:MM:SS	时间值或持续时间
+YEAR	1	1901/2155	YYYY	年份值
+DATETIME	8	1000-01-01 00:00:00/9999-12-31 23:59:59	YYYY-MM-DD HH:MM:SS	混合日期和时间值
+TIMESTAMP	4	
+1970-01-01 00:00:00/2038
+
+结束时间是第 2147483647 秒，北京时间 2038-1-19 11:14:07，格林尼治时间 2038年1月19日 凌晨 03:14:07
+
+YYYYMMDD HHMMSS	混合日期和时间值，时间戳
+字符串类型
+字符串类型指CHAR、VARCHAR、BINARY、VARBINARY、BLOB、TEXT、ENUM和SET。该节描述了这些类型如何工作以及如何在查询中使用这些类型。
+
+类型	大小	用途
+CHAR	0-255字节	定长字符串
+VARCHAR	0-65535 字节	变长字符串
+TINYBLOB	0-255字节	不超过 255 个字符的二进制字符串
+TINYTEXT	0-255字节	短文本字符串
+BLOB	0-65 535字节	二进制形式的长文本数据
+TEXT	0-65 535字节	长文本数据
+MEDIUMBLOB	0-16 777 215字节	二进制形式的中等长度文本数据
+MEDIUMTEXT	0-16 777 215字节	中等长度文本数据
+LONGBLOB	0-4 294 967 295字节	二进制形式的极大文本数据
+LONGTEXT	0-4 294 967 295字节	极大文本数据
+CHAR和VARCHAR类型类似，但它们保存和检索的方式不同。它们的最大长度和是否尾部空格被保留等方面也不同。在存储或检索过程中不进行大小写转换。
+
+BINARY和VARBINARY类类似于CHAR和VARCHAR，不同的是它们包含二进制字符串而不要非二进制字符串。也就是说，它们包含字节字符串而不是字符字符串。这说明它们没有字符集，并且排序和比较基于列值字节的数值值。
+
+BLOB是一个二进制大对象，可以容纳可变数量的数据。有4种BLOB类型：TINYBLOB、BLOB、MEDIUMBLOB和LONGBLOB。它们只是可容纳值的最大长度不同。
+
+有4种TEXT类型：TINYTEXT、TEXT、MEDIUMTEXT和LONGTEXT。这些对应4种BLOB类型，有相同的最大长度和存储需求。
+
+获取服务器元数据
+以下命令语句可以在 MySQL 的命令提示符使用，也可以在脚本中 使用，如PHP脚本。
+命令	描述
+SELECT VERSION( )	服务器版本信息
+SELECT DATABASE( )	当前数据库名 (或者返回空)
+SELECT USER( )	当前用户名
+SHOW STATUS	服务器状态
+SHOW VARIABLES	服务器配置变量
+
+replace into：如果存在primary 或 unique相同的记录，则先删除掉。再插入新记录。
+insert ignore into:当插入数据时，在设置了记录的唯一性后，如果插入重复数据，将不返回错误，只以警告形式返回.
+
+如果你想删除数据表中的重复数据，你可以使用以下的SQL语句：
+mysql> CREATE TABLE tmp SELECT last_name, first_name, sex FROM person_tbl  GROUP BY (last_name, first_name, sex);
+mysql> DROP TABLE person_tbl;
+mysql> ALTER TABLE tmp RENAME TO person_tbl;
+当然你也可以在数据表中添加 INDEX（索引） 和 PRIMAY KEY（主键）这种简单的方法来删除表中的重复记录。方法如下：
+mysql> ALTER IGNORE TABLE person_tbl
+    -> ADD PRIMARY KEY (last_name, first_name);
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
