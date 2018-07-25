@@ -1,0 +1,164 @@
+
+1、查询所有数据库的大小
+
+select concat(round(sum(data_length/1024/1024),2),'MB') as data from tables;
+2、查询指定数据库的大小
+select  concat(round(sum(data_length/1024/1024),2),'MB') as data from tables where table_schema='palletpro';
+
+select count(table_name), concat(round(sum(data_length/1024/1024),2),'MB') as data from tables where table_schema='palletpro';
+3、查询指定数据库下指定表的大小
+
+#以MB为单位
+select CONCAT(round(data_length/1024/1024,2),'MB') as data from tables tt where tt.TABLE_SCHEMA='lbs' and tt.table_name='cellinfo';
+
+#以G我单位
+select CONCAT(round(data_length/1024/1024/1024,2),'G') as data from tables tt where tt.TABLE_SCHEMA='test2' 
+and tt.table_name='cellinfo_v2';
+
+4、查询指定数据库每个表的大小
+
+select t.table_name,CONCAT(round(data_length/1024/1024,2),'MB') as data from tables t where t.table_schema='palletpro' 
+and t.TABLE_TYPE='BASE TABLE' and t.table_name in ('pallet_history_position','pallet_history_status');
+5、查询指定数据库下指定表的所有列
+
+select column_name from columns where table_schema='palletpro' and table_name='pallet';
+
+6、查询数据条数
+select count(1) from palletpro.pallet_history_position;
+select count(1) from palletpro.pallet_history_status;
+select count(1) from test.cellinfo_v2;
+
+select c.company_name from company c where c.company_type=1;
+select co.company_id,co.company_name,c.storage_id,c.storage_name from company co left join company_storage c on co.company_id=c.company_id;
+
+
+update company c set c.company_name='摩方物流有限公司(废)' where c.company_type=1 and c.company_name='摩方物流有限公司';
+update company c set c.company_name='魔方物流有限公司(废)' where c.company_type=1 and c.company_name='魔方物流有限公司';
+
+备份：mysqldump -uroot -pA1b2c3#4 -B palletpro  --single-transaction --master-data =2 -R -F |gzip > palletpro_`date +%Y%m%d%H%M%S`.sql.gz
+备份：mysqldump -uroot -pA1b2c3#4 --all-databases --single-transaction --master-data =2 -R -F |gzip > database_`date +%Y%m%d%H%M%S`.sql.gz
+
+
+#查询企业ID等信息
+select c.company_id "企业ID",(case c.company_type when 1 then "托盘生产商" when 2 then "投资商" when 3 then "运营代理商" when 4  then "托盘承租方" when 5 then "POI" end)  "企业类型",c.company_name  "企业名字" from company c;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
